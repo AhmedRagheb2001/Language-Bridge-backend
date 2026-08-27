@@ -1,0 +1,190 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  username               String          @unique
+  email                  String          @unique
+  password               String?
+  role                   Role            @default(USER)
+  createdAt              DateTime        @default(now())
+  id                     String          @id @default(uuid())
+  updatedAt              DateTime        @updatedAt
+  authAccounts           AuthAccount[]
+  chatsAsUser1           Chat[]          @relation("User1Chats")
+  chatsAsUser2           Chat[]          @relation("User2Chats")
+  comments               Comment[]
+  receivedFriendRequests FriendRequest[] @relation("ReceivedRequests")
+  sentFriendRequests     FriendRequest[] @relation("SentRequests")
+  friendshipsAsUser1     Friendship[]    @relation("User1Friendships")
+  friendshipsAsUser2     Friendship[]    @relation("User2Friendships")
+  likes                  Like[]
+  messagesSent           Message[]
+  notifications          Notification[]
+  posts                  Post[]
+  profile                Profile?
+  refreshTokens          RefreshToken[]
+}
+
+model Profile {
+  id                String   @id @default(uuid())
+  displayName       String @unique
+  bio               String?
+  profilePictureUrl String?
+  profilePicturePublicId String?
+  nativeLanguage    Language
+  learningLanguage  Language
+  userId            String   @unique
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id])
+}
+
+model AuthAccount {
+  id                String   @id @default(uuid())
+  provider          String
+  providerAccountId String
+  userId            String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerAccountId])
+}
+
+model Post {
+  id                 String    @id @default(uuid())
+  title              String
+  content            String?
+  postPictureUrl     String?
+  postPicturePublicId String?
+  userId             String
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  comments           Comment[]
+  likes              Like[]
+  user               User      @relation(fields: [userId], references: [id])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId])
+}
+model FriendRequest {
+  id         String              @id @default(uuid())
+  senderId   String
+  receiverId String
+  status     FriendRequestStatus @default(PENDING)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  receiver   User                @relation("ReceivedRequests", fields: [receiverId], references: [id])
+  sender     User                @relation("SentRequests", fields: [senderId], references: [id])
+
+  @@unique([senderId, receiverId])
+}
+
+model Friendship {
+  id        String   @id @default(uuid())
+  user1Id   String
+  user2Id   String
+  createdAt DateTime @default(now())
+  user1     User     @relation("User1Friendships", fields: [user1Id], references: [id])
+  user2     User     @relation("User2Friendships", fields: [user2Id], references: [id])
+
+  @@unique([user1Id, user2Id])
+}
+
+model Chat {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user1Id   String
+  user2Id   String
+  user1     User      @relation("User1Chats", fields: [user1Id], references: [id])
+  user2     User      @relation("User2Chats", fields: [user2Id], references: [id])
+  messages  Message[]
+
+  @@unique([user1Id, user2Id])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  chatId    String
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  chat      Chat     @relation(fields: [chatId], references: [id])
+  sender    User     @relation(fields: [senderId], references: [id])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  content   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  user      User             @relation(fields: [userId], references: [id])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Language {
+  ENGLISH
+  SPANISH
+  FRENCH
+  ARABIC
+  TURKISH
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELED
+}
+
+enum NotificationType {
+  FRIEND_REQUEST
+  MESSAGE
+  POST_LIKE
+  POST_COMMENT
+}
