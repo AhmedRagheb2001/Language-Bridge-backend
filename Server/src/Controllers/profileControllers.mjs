@@ -18,7 +18,31 @@ const prisma = new PrismaClient ({
 //@route GET /api/v1/profiles
 //@access Private/Protected(needs only an access token)
 export const getAllProfiles = asyncHandler (async(req,res) =>{
+    const {search,sort,nativeLanguage,learningLanguage} = req.query;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
     const allProfiles = await prisma.profile.findMany({
+        where : {
+            ...(search && {
+                displayName : {
+                    contains : search
+                }
+            }),
+            ...(nativeLanguage && {
+                nativeLanguage
+            }),
+            ...(learningLanguage && {
+                learningLanguage
+            })
+        },
+        ...(sort && {
+            orderBy : {
+                [sort] : order === "desc" ? "desc" : "asc"
+            }
+        }),
+        skip : (page-1) * limit,
+        take : limit,
         select : {
             id : true , 
             displayName : true,
