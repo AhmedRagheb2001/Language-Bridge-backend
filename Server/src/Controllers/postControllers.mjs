@@ -135,11 +135,11 @@ export const getAllPosts = asyncHandler(async (req, res) => {
 
         },
 
-        orderBy: {
+        // orderBy: {
 
-            createdAt: "desc"
+        //     createdAt: "desc"
 
-        }
+        // }
 
     });
 
