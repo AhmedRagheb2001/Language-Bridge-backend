@@ -448,7 +448,9 @@ export const createNewPost = asyncHandler(async (req, res) => {
 export const getUserPosts = asyncHandler(async (req, res) => {
 
     const { user_id } = req.params;
-
+    const {sort,order} = req.query;
+    const page = Number(req.query.page) || 1;
+    const limit = Number (req.query.limit) || 10;
 
     if (!user_id) {
 
@@ -468,7 +470,13 @@ export const getUserPosts = asyncHandler(async (req, res) => {
             userId: String(user_id)
 
         },
-
+        skip : (page -1)*limit,
+        take : limit,
+        ...(sort && {
+            orderBy : {
+                [sort] : order === "desc" ? "desc" : "asc"
+            }
+        }),
         select: {
 
             id: true,
@@ -507,11 +515,11 @@ export const getUserPosts = asyncHandler(async (req, res) => {
 
         },
 
-        orderBy: {
+        // orderBy: {
 
-            createdAt: "desc"
+        //     createdAt: "desc"
 
-        }
+        // }
 
     });
 
