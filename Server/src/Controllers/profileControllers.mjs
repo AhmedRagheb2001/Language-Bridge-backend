@@ -18,7 +18,7 @@ const prisma = new PrismaClient ({
 //@route GET /api/v1/profiles
 //@access Private/Protected(needs only an access token)
 export const getAllProfiles = asyncHandler (async(req,res) =>{
-    const {search,sort,nativeLanguage,learningLanguage} = req.query;
+    const {search,sort,nativeLanguage,learningLanguage,order} = req.query;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
 
