@@ -78,11 +78,27 @@ async function addLikedByMe(posts, userId) {
 // @access  Private
 //
 // ============================================================
-
+//Query parameters are : searh(title),page,limit,sort,order
 export const getAllPosts = asyncHandler(async (req, res) => {
+    const {search,sort,order} = req.query;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) ||10;
 
     const allPosts = await prisma.post.findMany({
-
+        where : {
+            ...(search && {
+                title : {
+                    contains : search
+                }
+            })
+        },
+        ...(sort && {
+            orderBy : {
+                [sort] : order === "desc" ? "desc" : "asc"
+            }
+        }),
+        skip : (page -1)*limit,
+        take : limit,
         select: {
 
             id: true,
